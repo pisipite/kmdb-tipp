@@ -1,21 +1,78 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="hu">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KMDB Tipp</title>
-    <link rel="stylesheet" href="styles.css">
+    <title>KMDB Tipp Játék</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@huggingface/hub"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@huggingface/datasets"></script>
 </head>
 <body>
-    <div id="app">
-        <h1>Welcome to KMDB Tipp</h1>
-        <button>Click Me</button>
+    <h1>KMDB Tipp Játék</h1>
+    <p>Melyik személy szerepel a legtöbb cikkben?</p>
+    <div id="quiz">
+        <button id="option1"></button>
+        <button id="option2"></button>
+        <button id="option3"></button>
     </div>
-    <div id="question-container">
-        <h2 id="question"></h2>
-        <div id="options"></div>
-    </div>
-    <div id="result"></div>
-    <script src="script.js"></script>
+    <p id="result"></p>
+
+    <script>
+        async function loadDataset() {
+            const dataset = await hf_datasets.load_dataset('K-Monitor/kmdb_base');
+            return dataset['train'];
+        }
+
+        function getMostFrequentPersons(dataset) {
+            const personCount = {};
+            dataset.forEach(article => {
+                article.persons.forEach(person => {
+                    if (!personCount[person]) {
+                        personCount[person] = 0;
+                    }
+                    personCount[person]++;
+                });
+            });
+            const sortedPersons = Object.entries(personCount).sort((a, b) => b[1] - a[1]);
+            return sortedPersons.slice(0, 10);
+        }
+
+        function getRandomOptions(mostFrequentPersons, correctPerson) {
+            const options = [correctPerson];
+            while (options.length < 3) {
+                const randomPerson = mostFrequentPersons[Math.floor(Math.random() * mostFrequentPersons.length)][0];
+                if (!options.includes(randomPerson)) {
+                    options.push(randomPerson);
+                }
+            }
+            return options.sort(() => Math.random() - 0.5);
+        }
+
+        async function setupQuiz() {
+            const dataset = await loadDataset();
+            const mostFrequentPersons = getMostFrequentPersons(dataset);
+            const correctPerson = mostFrequentPersons[0][0];
+            const options = getRandomOptions(mostFrequentPersons, correctPerson);
+
+            document.getElementById('option1').innerText = options[0];
+            document.getElementById('option2').innerText = options[1];
+            document.getElementById('option3').innerText = options[2];
+
+            document.getElementById('option1').onclick = () => checkAnswer(options[0], correctPerson);
+            document.getElementById('option2').onclick = () => checkAnswer(options[1], correctPerson);
+            document.getElementById('option3').onclick = () => checkAnswer(options[2], correctPerson);
+        }
+
+        function checkAnswer(selected, correct) {
+            const result = document.getElementById('result');
+            if (selected === correct) {
+                result.innerText = 'Gratulálok, eltaláltad!';
+            } else {
+                result.innerText = 'Sajnálom, nem találtad el.';
+            }
+        }
+
+        setupQuiz();
+    </script>
 </body>
 </html>
