@@ -19,7 +19,9 @@
 
     <script>
         async function loadDataset() {
+            console.log("Loading dataset...");
             const dataset = await hf_datasets.load_dataset('K-Monitor/kmdb_base');
+            console.log("Dataset loaded:", dataset);
             return dataset['train'];
         }
 
@@ -34,6 +36,7 @@
                 });
             });
             const sortedPersons = Object.entries(personCount).sort((a, b) => b[1] - a[1]);
+            console.log("Most frequent persons:", sortedPersons);
             return sortedPersons.slice(0, 10);
         }
 
@@ -45,6 +48,7 @@
                     options.push(randomPerson);
                 }
             }
+            console.log("Options before shuffle:", options);
             return options.sort(() => Math.random() - 0.5);
         }
 
@@ -53,6 +57,8 @@
             const mostFrequentPersons = getMostFrequentPersons(dataset);
             const correctPerson = mostFrequentPersons[0][0];
             const options = getRandomOptions(mostFrequentPersons, correctPerson);
+
+            console.log("Quiz options:", options);
 
             document.getElementById('option1').innerText = options[0];
             document.getElementById('option2').innerText = options[1];
